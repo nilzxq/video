@@ -18,6 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="50dp">
          <SeekBar
+             android:id="@+id/play_seek"
              android:thumb="@null"
              android:progressDrawable="@drawable/seekbar_style2"
              android:max="100"
@@ -81,6 +82,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                     <SeekBar
+                        android:id="@+id/volume_seek"
                         android:visibility="gone"
                         android:indeterminate="false"
                         android:thumb="@null"
