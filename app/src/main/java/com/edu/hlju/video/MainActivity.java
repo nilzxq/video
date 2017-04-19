@@ -2,7 +2,9 @@ package com.edu.hlju.video;
 
 import android.app.Activity;
 import android.app.Notification;
+import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Bundle;
@@ -10,6 +12,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Adapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.MediaController;
@@ -23,16 +26,19 @@ import org.w3c.dom.Text;
 public class MainActivity extends Activity {
     private VideoView videoView;
     private LinearLayout controllerLayout;
-    private ImageView play_controller_img,screen_img;
+    private ImageView play_controller_img,screen_img,volume_img;
     private TextView time_current_tv,time_total_tv;
-    private SeekBar play_seek,volumn_seek;
+    private SeekBar play_seek,volume_seek;
     private static  final int UPDATE_UI=1;
     private int screen_width,screen_height;
     private RelativeLayout videoLayout;
+    private AudioManager mAudioManager;
+    private boolean isFullScreen=false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mAudioManager=(AudioManager)getSystemService(AUDIO_SERVICE);
         initUI();
         setPlayerEvent();
         String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/test1.mp4";
@@ -40,9 +46,9 @@ public class MainActivity extends Activity {
          * 本地视频播放
          */
         videoView.setVideoPath(path);
-
         videoView.start();
         UIHandler.sendEmptyMessage(UPDATE_UI);
+
         /**
          * 网络播放
          */
@@ -155,6 +161,41 @@ public class MainActivity extends Activity {
                 UIHandler.sendEmptyMessage(UPDATE_UI);
             }
         });
+        volume_seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                /**
+                 * 设置当前设备的音量
+                 */
+                mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC,progress,0);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+        /**
+         * 横竖屏切换
+         */
+        screen_img.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                if(isFullScreen){
+                    //切换全屏或半屏
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                }else{
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                }
+            }
+        });
     }
     /**
      * 初始化UI布局
@@ -168,10 +209,21 @@ public class MainActivity extends Activity {
         time_current_tv=(TextView)findViewById(R.id.time_current_tv);
         time_total_tv=(TextView)findViewById(R.id.time_total_tv);
         play_seek=(SeekBar)findViewById(R.id.play_seek);
-        volumn_seek=(SeekBar)findViewById(R.id.volume_seek);
+        volume_seek=(SeekBar)findViewById(R.id.volume_seek);
+        volume_img=(ImageView)findViewById(R.id.volume_img);
         screen_width=getResources().getDisplayMetrics().widthPixels;
         screen_height=getResources().getDisplayMetrics().heightPixels;
         videoLayout=(RelativeLayout)findViewById(R.id.videoLayout);
+        /**
+         * 当前设备的最大音量
+         */
+        int streamMaxVolume=mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        /**
+         * 获取设备当前的音量
+         */
+        int streamVolume=mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        volume_seek.setMax(streamMaxVolume);
+        volume_seek.setProgress(streamVolume);
     }
 
     private void setVideoView(int width,int height){
@@ -196,12 +248,18 @@ public class MainActivity extends Activity {
          */
         if(getResources().getConfiguration().orientation==Configuration.ORIENTATION_LANDSCAPE){
             setVideoView(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
+             volume_img.setVisibility(View.VISIBLE);
+            volume_seek.setVisibility(View.VISIBLE);
+            isFullScreen=true;
         }
         /**
          * 当屏幕方向为竖屏时
          */
         else{
            setVideoView(ViewGroup.LayoutParams.MATCH_PARENT,PixelUtil.dp2px(240));
+            volume_img.setVisibility(View.GONE);
+            volume_seek.setVisibility(View.GONE);
+            isFullScreen=false;
         }
     }
 }

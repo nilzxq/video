@@ -69,6 +69,7 @@
 
              </LinearLayout>
                 <LinearLayout
+                    android:id="@+id/volume_layout"
                     android:gravity="center_vertical|right"
                     android:orientation="horizontal"
                     android:layout_toRightOf="@id/left_layout"
@@ -76,6 +77,7 @@
                     android:layout_width="10dp"
                     android:layout_height="match_parent">
                     <ImageView
+                        android:id="@+id/volume_img"
                         android:visibility="gone"
                         android:src="@mipmap/volume"
                         android:layout_width="wrap_content"
