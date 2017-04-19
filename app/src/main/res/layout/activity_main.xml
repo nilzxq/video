@@ -6,10 +6,14 @@
         android:id="@+id/videoLayout"
         android:layout_width="match_parent"
         android:layout_height="240dp">
-        <VideoView
+
+        <com.edu.hlju.video.CustomVideoView
         android:id="@+id/videoView"
         android:layout_width="match_parent"
         android:layout_height="240dp"/>
+
+        <include layout="@layout/layout_progress"></include>
+
         <LinearLayout
             android:id="@+id/controllerbar_layout"
             android:layout_alignParentBottom="true"

@@ -1,6 +1,7 @@
 package com.edu.hlju.video;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.Notification;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
@@ -10,9 +11,13 @@ import android.os.Environment;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Adapter;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.MediaController;
@@ -34,6 +39,12 @@ public class MainActivity extends Activity {
     private RelativeLayout videoLayout;
     private AudioManager mAudioManager;
     private boolean isFullScreen=false;
+    private boolean isAdjust=false;
+    private int threshold=54;
+    private float lastX=0,lastY=0;
+    private float mBrightness;
+    private ImageView operation_bg,operation_percent;
+    private FrameLayout progress_layout;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -196,7 +207,152 @@ public class MainActivity extends Activity {
                 }
             }
         });
+        /**
+         * 控制VideoView的手势事件
+         */
+        videoView.setOnTouchListener(new View.OnTouchListener(){
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                float x=event.getX();
+                float y=event.getY();
+
+                switch (event.getAction()){
+                    /**
+                     * 手指落下屏幕的那一刻（只会调用一次）
+                     */
+                    case MotionEvent.ACTION_DOWN:
+                    {
+                        lastX=x;
+                        lastY=y;
+                        break;
+                    }
+                    /**
+                     * 手指在屏幕上移动(调用多次)
+                     */
+                    case MotionEvent.ACTION_MOVE:
+                    {
+                        float detlaX=x-lastX;
+                        float detlaY=y-lastY;
+                        float absdetlaX=Math.abs(detlaX);
+                        float absdetlaY=Math.abs(detlaY);
+                        if(absdetlaX>threshold&&absdetlaY>threshold){
+                            if(absdetlaX<absdetlaY){
+                                isAdjust=true;
+                            }else{
+                                isAdjust=false;
+                            }
+                        }else if(absdetlaX<threshold&&absdetlaY>threshold){
+                            isAdjust=true;
+                        }else if(absdetlaX>threshold&&absdetlaY<threshold){
+                            isAdjust=false;
+                        }
+                        Log.e("Main","手势是否合法"+isAdjust);
+                        if(isAdjust){
+                            /**
+                             * 在判断好当前手势事件已经合法的前提下，去区分此时手势应该调节亮度还是调节声音
+                             */
+                            if(x<screen_width/2){
+                                /**
+                                 * 调节亮度
+                                 */
+                                if(detlaY>0){
+                                    /**
+                                     * 降低亮度
+                                     */
+                                    Log.e("Main","降低亮度"+detlaY);
+                                }else{
+                                    /**
+                                     * 升高亮度
+                                     */
+                                    Log.e("Main","升高亮度"+detlaY);
+                                }
+                                changeBrightness(-detlaY);
+                            }else{
+                                /**
+                                 * 调节声音
+                                 */
+                                if(detlaY>0){
+                                    /**
+                                     * 减小声音
+                                     */
+                                    Log.e("Main","减小声音"+detlaY);
+                                }else{
+                                    /**
+                                     * 增大声音
+                                     */
+                                    Log.e("Main","增大声音"+detlaY);
+                                }
+                                changeVolume(-detlaY);
+                            }
+                        }
+                        lastX=x;
+                        lastY=y;
+                        break;
+                    }
+                    /**
+                     * 手指离开屏幕的那一刻（调用一次）
+                     */
+                    case MotionEvent.ACTION_UP:
+                    {
+                        progress_layout.setVisibility(View.GONE);
+                        break;
+                    }
+
+                }
+                return true;
+            }
+        });
     }
+
+    /**
+     * 改变声音
+     * @param detlaY
+     */
+    private void changeVolume(float detlaY){
+        int max=mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        int current=mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        int index=(int)(detlaY/screen_height*max*3);
+        int volume=Math.max(current+index,0);
+        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC,volume,0);
+        if(progress_layout.getVisibility()==View.GONE) {
+            progress_layout.setVisibility(View.VISIBLE);
+        }
+        operation_bg.setImageResource(R.mipmap.video_volume_bg);
+        ViewGroup.LayoutParams layoutParams=operation_percent.getLayoutParams();
+        layoutParams.width=(int)(PixelUtil.dp2px(94)*(float)volume/max);
+        operation_percent.setLayoutParams(layoutParams);
+        volume_seek.setProgress(volume);
+
+    }
+    /**
+     * 调节亮度
+     */
+   private  void changeBrightness(float detlaY){
+       WindowManager.LayoutParams attributes=getWindow().getAttributes();
+       mBrightness=attributes.screenBrightness;
+       float index=detlaY/screen_height/3;
+       mBrightness+=index;
+
+
+       if(mBrightness>1.0f){
+           mBrightness=1.0f;
+       }
+       if(mBrightness<0.01f){
+           mBrightness=0.01f;
+       }
+       attributes.screenBrightness=mBrightness;
+       if(progress_layout.getVisibility()==View.GONE) {
+           progress_layout.setVisibility(View.VISIBLE);
+       }
+       operation_bg.setImageResource(R.mipmap.video_brightness_bg);
+       ViewGroup.LayoutParams layoutParams=operation_percent.getLayoutParams();
+       layoutParams.width=(int)(PixelUtil.dp2px(94)*mBrightness);
+       operation_percent.setLayoutParams(layoutParams);
+       getWindow().setAttributes(attributes);
+
+   }
+
     /**
      * 初始化UI布局
      */
@@ -214,6 +370,9 @@ public class MainActivity extends Activity {
         screen_width=getResources().getDisplayMetrics().widthPixels;
         screen_height=getResources().getDisplayMetrics().heightPixels;
         videoLayout=(RelativeLayout)findViewById(R.id.videoLayout);
+        operation_bg=(ImageView)findViewById(R.id.operation_bg);
+        operation_percent=(ImageView)findViewById(R.id.operation_percent);
+        progress_layout=(FrameLayout) findViewById(R.id.progress_layout);
         /**
          * 当前设备的最大音量
          */
@@ -251,6 +410,8 @@ public class MainActivity extends Activity {
              volume_img.setVisibility(View.VISIBLE);
             volume_seek.setVisibility(View.VISIBLE);
             isFullScreen=true;
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
         /**
          * 当屏幕方向为竖屏时
@@ -260,6 +421,8 @@ public class MainActivity extends Activity {
             volume_img.setVisibility(View.GONE);
             volume_seek.setVisibility(View.GONE);
             isFullScreen=false;
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
         }
     }
 }
