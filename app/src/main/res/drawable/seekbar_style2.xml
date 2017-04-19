@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background">
+        <shape>
+            <!-- 层叠式的样式 灰色上面覆盖了一层橙色的背景，代表实际的进度-->
+            <solid android:color="#707070"></solid>
+            <size android:height="5dp"></size>
+        </shape>
+    </item>
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape>
+                <solid android:color="#B94310">
+                </solid>
+                <size android:height="5dp"></size>
+            </shape>
+        </clip>
+    </item>
+</layer-list>
