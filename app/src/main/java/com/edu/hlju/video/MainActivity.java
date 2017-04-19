@@ -2,15 +2,18 @@ package com.edu.hlju.video;
 
 import android.app.Activity;
 import android.app.Notification;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.MediaController;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.VideoView;
@@ -24,17 +27,20 @@ public class MainActivity extends Activity {
     private TextView time_current_tv,time_total_tv;
     private SeekBar play_seek,volumn_seek;
     private static  final int UPDATE_UI=1;
+    private int screen_width,screen_height;
+    private RelativeLayout videoLayout;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initUI();
         setPlayerEvent();
-        String path= Environment.getExternalStorageDirectory().getAbsolutePath()+"/test1.mp4";
+        String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/test1.mp4";
         /**
          * 本地视频播放
          */
         videoView.setVideoPath(path);
+
         videoView.start();
         UIHandler.sendEmptyMessage(UPDATE_UI);
         /**
@@ -154,6 +160,7 @@ public class MainActivity extends Activity {
      * 初始化UI布局
      */
     private void initUI(){
+        PixelUtil.initContext(this);
         videoView=(VideoView)findViewById(R.id.videoView);
         controllerLayout=(LinearLayout) findViewById(R.id.controllerbar_layout);
         play_controller_img=(ImageView)findViewById(R.id.pause_img);
@@ -162,5 +169,39 @@ public class MainActivity extends Activity {
         time_total_tv=(TextView)findViewById(R.id.time_total_tv);
         play_seek=(SeekBar)findViewById(R.id.play_seek);
         volumn_seek=(SeekBar)findViewById(R.id.volume_seek);
+        screen_width=getResources().getDisplayMetrics().widthPixels;
+        screen_height=getResources().getDisplayMetrics().heightPixels;
+        videoLayout=(RelativeLayout)findViewById(R.id.videoLayout);
+    }
+
+    private void setVideoView(int width,int height){
+        ViewGroup.LayoutParams layoutParams=videoView.getLayoutParams();
+        layoutParams.width=width;
+        layoutParams.height=height;
+        videoView.setLayoutParams(layoutParams);
+        ViewGroup.LayoutParams layoutParams1=videoLayout.getLayoutParams();
+        layoutParams1.width=width;
+        layoutParams1.height=height;
+        videoLayout.setLayoutParams(layoutParams1);
+    }
+    /**
+     * 监听到屏幕方向的改变
+     * @param newConfig
+     */
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        /**
+         * 当屏幕方向为横屏时
+         */
+        if(getResources().getConfiguration().orientation==Configuration.ORIENTATION_LANDSCAPE){
+            setVideoView(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
+        }
+        /**
+         * 当屏幕方向为竖屏时
+         */
+        else{
+           setVideoView(ViewGroup.LayoutParams.MATCH_PARENT,PixelUtil.dp2px(240));
+        }
     }
 }
