@@ -1,9 +1,12 @@
 package com.edu.hlju.video;
 
 import android.app.Activity;
+import android.app.Notification;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -20,7 +23,7 @@ public class MainActivity extends Activity {
     private ImageView play_controller_img,screen_img;
     private TextView time_current_tv,time_total_tv;
     private SeekBar play_seek,volumn_seek;
-
+    private static  final int UPDATE_UI=1;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,7 +34,9 @@ public class MainActivity extends Activity {
         /**
          * 本地视频播放
          */
-      videoView.setVideoPath(path);
+        videoView.setVideoPath(path);
+        videoView.start();
+        UIHandler.sendEmptyMessage(UPDATE_UI);
         /**
          * 网络播放
          */
@@ -69,6 +74,40 @@ public class MainActivity extends Activity {
         }
         textView.setText(str);
     }
+
+    /**
+     * 刷新UI的操作
+     */
+    private Handler UIHandler=new Handler(){
+
+        @Override
+        public void handleMessage(Message msg){
+            super.handleMessage(msg);
+            if(msg.what==UPDATE_UI) {
+                //获取视频当前的播放时间
+                int currentPosition = videoView.getCurrentPosition();
+                //获取视频播放的总时间
+                int totalduration = videoView.getDuration();
+                //格式化视频播放时间
+                updateTextViewWithTimeFormat(time_current_tv, currentPosition);
+                updateTextViewWithTimeFormat(time_total_tv, totalduration);
+                play_seek.setMax(totalduration);
+                play_seek.setProgress(currentPosition);
+                UIHandler.sendEmptyMessageDelayed(UPDATE_UI, 500);
+            }
+        }
+    };
+ @Override
+  protected void onPause(){
+    super.onPause();
+    UIHandler.removeMessages(UPDATE_UI);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
     private void setPlayerEvent(){
         /**
          * 控制视频的播放和暂停
@@ -81,11 +120,33 @@ public class MainActivity extends Activity {
                     play_controller_img.setImageResource(R.drawable.play_btn_style);
                     //暂停播放
                     videoView.pause();
+                    UIHandler.removeMessages(UPDATE_UI);
                 }else{
                     play_controller_img.setImageResource(R.drawable.pause_btn_style);
                     //继续播放
                     videoView.start();
+                    UIHandler.sendEmptyMessage(UPDATE_UI);
                 }
+            }
+        });
+        play_seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                   updateTextViewWithTimeFormat(time_current_tv,progress);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                UIHandler.removeMessages(UPDATE_UI);
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                int progress=seekBar.getProgress();
+                //令视频播放进度遵循seekBar停止拖动的这一刻的进度
+                videoView.seekTo(progress);
+                UIHandler.sendEmptyMessage(UPDATE_UI);
             }
         });
     }
