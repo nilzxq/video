@@ -24,9 +24,14 @@ import android.widget.MediaController;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.VideoView;
 
 import org.w3c.dom.Text;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class MainActivity extends Activity {
     private VideoView videoView;
@@ -45,6 +50,8 @@ public class MainActivity extends Activity {
     private float mBrightness;
     private ImageView operation_bg,operation_percent;
     private FrameLayout progress_layout;
+    private String fileName;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,11 +59,12 @@ public class MainActivity extends Activity {
         mAudioManager=(AudioManager)getSystemService(AUDIO_SERVICE);
         initUI();
         setPlayerEvent();
-        String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/test1.mp4";
+        String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/english.mp4";
         /**
          * 本地视频播放
          */
         videoView.setVideoPath(path);
+        Log.e(path,"");
         videoView.start();
         UIHandler.sendEmptyMessage(UPDATE_UI);
 
@@ -424,5 +432,30 @@ public class MainActivity extends Activity {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
         }
+    }
+
+    public void writeToSdcard(String s) {
+        if (Environment.getExternalStorageState().equals(
+                Environment.MEDIA_MOUNTED)) {
+            File sdCardDir = Environment.getExternalStorageDirectory();
+            try {
+                File file = new File(sdCardDir.getCanonicalPath() + fileName);
+                FileOutputStream fos = new FileOutputStream(file);
+
+                fos.write(s.getBytes());
+                fos.close();
+
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+        }
+
+        else {
+            Toast.makeText(MainActivity.this, "sd卡异常", Toast.LENGTH_LONG)
+                    .show();
+        }
+
     }
 }
