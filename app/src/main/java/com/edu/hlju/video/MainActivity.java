@@ -59,32 +59,32 @@ public class MainActivity extends Activity {
         mAudioManager=(AudioManager)getSystemService(AUDIO_SERVICE);
         initUI();
         setPlayerEvent();
-        String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/english.mp4";
-        /**
-         * 本地视频播放
-         */
-        videoView.setVideoPath(path);
-        Log.e(path,"");
-        videoView.start();
-        UIHandler.sendEmptyMessage(UPDATE_UI);
+//        String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/english.mp4";
+//        /**
+//         * 本地视频播放
+//         */
+//        videoView.setVideoPath(path);
+//        Log.e(path,"");
+//        videoView.start();
+//        UIHandler.sendEmptyMessage(UPDATE_UI);
 
         /**
          * 网络播放
          */
-  //      videoView.setVideoURI(Uri.parse("http://192.168.99.143:8080/video/test1.mp4"));
-//        /**
-//         * 使用MediaController控制视频播放
-//         */
-//        MediaController controller=new MediaController(this);
-//        /**
-//         * 设置VideoView与MediaController建立关联
-//         */
-//        videoView.setMediaController(controller);
-//        /**
-//         * 设置MediaController与VideoView建立关联
-//         */
-//        controller.setMediaPlayer(videoView);
- //       videoView.start();
+        videoView.setVideoURI(Uri.parse("http://192.168.99.143:8080/video/english.mp4"));
+        /**
+         * 使用MediaController控制视频播放
+         */
+        MediaController controller=new MediaController(this);
+        /**
+         * 设置VideoView与MediaController建立关联
+         */
+        videoView.setMediaController(controller);
+        /**
+         * 设置MediaController与VideoView建立关联
+         */
+        controller.setMediaPlayer(videoView);
+        videoView.start();
     }
 
     /**
